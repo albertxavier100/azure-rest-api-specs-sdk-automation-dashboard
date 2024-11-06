@@ -19,7 +19,11 @@ function App() {
       <button onClick={async () => await updateGrid(grid, githubToken)}>Fetch SDK Automation Result</button>
 
       <div className="ag-theme-quartz" style={{ height: '80vh', width: '95w' }}>
-        <AgGridReact rowData={grid.rowData} columnDefs={grid.colDefs} />
+        <AgGridReact
+          rowData={grid.rowData}
+          columnDefs={grid.colDefs}
+          enableCellTextSelection={true}
+        />
       </div>
     </>
   );
@@ -29,7 +33,7 @@ export default App;
 
 //#region table
 
-// TODO: use enum as keys?
+// TODO: style ID -> id
 interface RowData {
   ID: string;
   Title: string;
@@ -38,7 +42,7 @@ interface RowData {
   Pipeline: string;
   Check: string;
   'Breaking Changes': string;
-  Time: string;
+  Time: Date;
 }
 
 async function updateGrid(grid, githubToken: string) {
@@ -56,7 +60,7 @@ async function updateGrid(grid, githubToken: string) {
           Pipeline: run.detailsUrl,
           Check: run.databaseId,
           'Breaking Changes': run.text?.includes('[Changelog] ### Breaking Changes') === true ? 'YES' : 'NO',
-          Time: d.createdAt,
+          Time: new Date(d.createdAt),
         });
       });
   });
@@ -92,10 +96,11 @@ function renderCheckCell(props) {
 function prepareGrid() {
   // Row Data: The data to be displayed.
   const [rowData, setRowData] = useState<Array<RowData>>([]);
+  // TODO: decouple by using name and field
   const columns = [
     {
       field: 'Time',
-      cellDataType: 'datestring',
+      cellDataType: 'date',
       filter: 'agDateColumnFilter',
     },
     {
@@ -111,15 +116,15 @@ function prepareGrid() {
     {
       field: 'Automation Result',
       filter: 'agTextColumnFilter',
-      cellStyle: (p) => { 
-        if (p.value === "FAILURE")  return {'backgroundColor': '#CC333344'}
-        return null
-      }
+      cellStyle: (p) => {
+        if (p.value === 'FAILURE') return { backgroundColor: '#CC333344' };
+        return null;
+      },
     },
     {
       field: 'Check',
       cellRenderer: renderCheckCell,
-     },
+    },
     {
       field: 'Pipeline',
       cellRenderer: renderPipelineCell,
@@ -127,10 +132,10 @@ function prepareGrid() {
     {
       field: 'Breaking Changes',
       filter: 'agTextColumnFilter',
-      cellStyle: (p) => { 
-        if (p.value === "YES")  return {'backgroundColor': '#2244CC44'}
-        return null
-      }
+      cellStyle: (p) => {
+        if (p.value === 'YES') return { backgroundColor: '#2244CC44' };
+        return null;
+      },
     },
   ];
 
